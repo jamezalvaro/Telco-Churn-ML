@@ -1,0 +1,14 @@
+# Abaikan folder cache Python
+__pycache__/
+*.pyc
+
+# Abaikan folder dataset (opsional, jika file CSV sangat besar)
+# Tugas/Dataset/
+
+# Abaikan file hasil export yang bisa dibuat ulang
+X_processed_telco.csv
+y_processed_telco.csv
+
+# Abaikan folder virtual environment jika ada
+venv/
+.env
