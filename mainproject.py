@@ -103,35 +103,26 @@ y_test.to_csv('y_test_ready.csv', index=False)
 
 print("\nData preprocessing, Splitting, dan SMOTE selesai! Data siap masuk ke algoritma.")
 
-# =========================================================
-# BAB 3: IMPLEMENTASI & EKSPERIMEN 3 MODEL (REVISI SUPER FINAL)
-# =========================================================
 
-
-# ---------------------------------------------------------
-# 1. MODEL BASELINE PAPER (LOGISTIC REGRESSION)
-# ---------------------------------------------------------
+# --- IMPLEMENTASI & EKSPERIMEN 3 MODEL ---
+# --- MODEL BASELINE PAPER (LOGISTIC REGRESSION) ---
 logreg = LogisticRegression(max_iter=1000, random_state=42)
 logreg.fit(X_train_smote, y_train_smote)
 y_pred_logreg = logreg.predict(X_test)
 y_prob_logreg = logreg.predict_proba(X_test)[:, 1]
 
-# ---------------------------------------------------------
-# 2. MODEL EKSPERIMEN KELOMPOK 1 (DECISION TREE)
-# ---------------------------------------------------------
+# --- MODEL EKSPERIMEN  1 (DECISION TREE) ---
 dt = DecisionTreeClassifier(random_state=42)
 dt.fit(X_train_smote, y_train_smote)
 y_pred_dt = dt.predict(X_test)
 y_prob_dt = dt.predict_proba(X_test)[:, 1]
 
-# ---------------------------------------------------------
-# 3. MODEL EKSPERIMEN KELOMPOK 2 (RANDOM FOREST + TUNING)
-# ---------------------------------------------------------
+# --- MODEL EKSPERIMEN  2 (RANDOM FOREST + TUNING) ---
 print("Sedang melakukan tuning parameter Random Forest... (Tunggu sebentar)")
 param_grid = {
-    'n_estimators': [50, 100],
     'max_depth': [10, 20, None],
-    'min_samples_split': [2, 5]
+    'n_estimators': [100, 200],
+    'criterion': ['gini', 'entropy']
 }
 
 rf = RandomForestClassifier(random_state=42)
@@ -142,9 +133,7 @@ best_rf = grid_search.best_estimator_
 y_pred_rf = best_rf.predict(X_test)
 y_prob_rf = best_rf.predict_proba(X_test)[:, 1]
 
-# ---------------------------------------------------------
-# 4. MEMBUAT TABEL KOMPARASI PERFORMA
-# ---------------------------------------------------------
+# --- MEMBUAT TABEL KOMPARASI PERFORMA ---
 def get_metrics(y_true, y_pred, y_prob):
     return [
         precision_score(y_true, y_pred),
@@ -176,4 +165,4 @@ tabel_komparasi = pd.DataFrame({
 
 # Dibulatkan 2 angka di belakang koma
 tabel_komparasi = tabel_komparasi.round(2)
-print(tabel_komparasi)
+display(tabel_komparasi)
