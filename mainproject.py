@@ -148,7 +148,7 @@ metrics_dt = get_metrics(y_test, y_pred_dt, y_prob_dt)
 metrics_rf = get_metrics(y_test, y_pred_rf, y_prob_rf)
 
 print("\n===================================================================")
-print("TABEL KOMPARASI PERFORMA (LAPORAN BAB 3)")
+print("TABEL KOMPARASI PERFORMA")
 print("===================================================================")
 
 tabel_komparasi = pd.DataFrame({
