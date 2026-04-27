@@ -67,4 +67,4 @@ X_final = pd.DataFrame(X_scaled, columns=X_enc.columns)
 X_final.to_csv('X_processed_telco.csv', index=False)
 y.to_csv('y_processed_telco.csv', index=False)
 
-print("\nData preprocessing selesai dan tersimpan di Folder anda!")
+print("\nData preprocessing selesai dan tersimpan di Folder anda!") 

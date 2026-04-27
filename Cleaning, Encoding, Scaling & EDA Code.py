@@ -4,8 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import MinMaxScaler, OrdinalEncoder # StandardScaler dihapus
-
+from sklearn.preprocessing import MinMaxScaler, OrdinalEncoder
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
 #Import yang digunakan
 
 #Sumber file
@@ -58,13 +59,32 @@ y = df_clean['Churn'].map({'No': 0, 'Yes': 1}) # Mengubah target ke angka
 cat_features = X.select_dtypes(include=['object']).columns
 X_enc = pd.get_dummies(X, columns=cat_features, drop_first=True)
 
-# --- Menggunakan Min-Max Scaling ---
+# SPLIT DATA (80% TRAIN & 20% TEST)
+X_train, X_test, y_train, y_test = train_test_split(X_enc, y, test_size=0.2, random_state=42, stratify=y)
+
+print("--- Distribusi Target SEBELUM SMOTE (Data Latih) ---")
+print(y_train.value_counts())
+
+#Scaling data setelah split
 scaler = MinMaxScaler()
-X_scaled = scaler.fit_transform(X_enc)
-X_final = pd.DataFrame(X_scaled, columns=X_enc.columns)
+# fit_transform HANYA pada data latih
+X_train_scaled = scaler.fit_transform(X_train)
+X_train_scaled = pd.DataFrame(X_train_scaled, columns=X_train.columns)
 
-# EXPORT HASIL KE FOLDER
-X_final.to_csv('X_processed_telco.csv', index=False)
-y.to_csv('y_processed_telco.csv', index=False)
+X_test_scaled = scaler.transform(X_test)
+X_test_scaled = pd.DataFrame(X_test_scaled, columns=X_test.columns)
 
-print("\nData preprocessing selesai dan tersimpan di Folder anda!")
+# -- PENERAPAN SMOTE (HANYA PADA DATA TRAINING) 
+smote = SMOTE(random_state=42)
+X_train_smote, y_train_smote = smote.fit_resample(X_train_scaled, y_train)
+
+print("\n--- Distribusi Target SESUDAH SMOTE (Data Latih) ---")
+print(y_train_smote.value_counts())
+
+# --- EXPORT HASIL KE FOLDER ---
+X_train_smote.to_csv('X_train_ready.csv', index=False)
+y_train_smote.to_csv('y_train_ready.csv', index=False)
+X_test_scaled.to_csv('X_test_ready.csv', index=False)
+y_test.to_csv('y_test_ready.csv', index=False)
+
+print("\nData preprocessing, Splitting, dan SMOTE selesai! Data siap masuk ke algoritma.")
