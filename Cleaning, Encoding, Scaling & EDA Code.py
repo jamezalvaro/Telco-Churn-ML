@@ -46,6 +46,14 @@ sns.countplot(data=df_clean, x='InternetService', hue='Churn', palette='Set2')
 plt.title('Distribusi Churn berdasarkan Layanan Internet')
 plt.show()
 
+# Visualisasi: Matriks Korelasi
+plt.figure(figsize=(10,6))
+# Membuat korelasi hanya untuk kolom angka
+corr_matrix = df_clean.select_dtypes(include=['number']).corr()
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Matriks Korelasi Fitur Numerik')
+plt.show()
+
 # --- TRANSFORMASI FITUR (ENCODING & SCALING) ---
 # Ordinal Encoding pada kolom Contract
 contract_order = [['Month-to-month', 'One year', 'Two year']]
