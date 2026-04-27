@@ -165,4 +165,4 @@ tabel_komparasi = pd.DataFrame({
 
 # Dibulatkan 2 angka di belakang koma
 tabel_komparasi = tabel_komparasi.round(2)
-display(tabel_komparasi)
+print(tabel_komparasi)
