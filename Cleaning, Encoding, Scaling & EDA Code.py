@@ -3,10 +3,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler, OrdinalEncoder
-from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
+
 #Import yang digunakan
 
 #Sumber file
