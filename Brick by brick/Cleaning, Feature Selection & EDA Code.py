@@ -2,10 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import warnings
 
-# Suppress warnings and set visual theme
-warnings.filterwarnings('ignore')
 sns.set_theme(style="whitegrid")
 custom_palette = ["#3498db", "#e74c3c"] # Blue for No Churn, Red for Churn
 

@@ -7,13 +7,13 @@ from sklearn.model_selection import train_test_split, StratifiedKFold, learning_
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, f1_score
 from sklearn.base import clone
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 from xgboost import XGBClassifier
 
-# --- System Configuration ---
+# --- Configuration ---
 sns.set_theme(style="whitegrid")
 
 print("System Initializing...")
@@ -21,21 +21,17 @@ print("Loading Dataset: WA_Fn-UseC_-Telco-Customer-Churn.csv")
 file_path = 'Dataset/WA_Fn-UseC_-Telco-Customer-Churn.csv' 
 df = pd.read_csv(file_path)
 
-
-# --- Data Preparation (Pre-Split) ---
-print("Data Preparation...")
+# --- Data Preparation ---
+print("Executing Data Preparation...")
 selected_features = [
     'Contract', 'InternetService', 'TotalCharges', 'tenure', 
     'PaperlessBilling', 'MultipleLines', 'StreamingMovies', 'Churn'
 ]
 df_clean = df[selected_features].copy()
-
 df_clean['TotalCharges'] = pd.to_numeric(df_clean['TotalCharges'], errors='coerce')
-df_clean['TotalCharges'] = df_clean['TotalCharges'].fillna(df_clean['TotalCharges'].median())
-
 
 # --- Target Encoding & Data Split ---
-print("Target Encoding & Data Split (80:20)...")
+print("Executing Target Encoding & Data Split (80:20)...")
 X = df_clean.drop('Churn', axis=1)
 y = df_clean['Churn'].map({'No': 0, 'Yes': 1}) 
 
@@ -43,8 +39,11 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
+train_median = X_train['TotalCharges'].median()
+X_train['TotalCharges'] = X_train['TotalCharges'].fillna(train_median)
+X_test['TotalCharges'] = X_test['TotalCharges'].fillna(train_median)
 
-# --- Initialization of Preprocessor & SMOTE Rules ---
+# --- Preprocessor & SMOTE Definitions ---
 numeric_features = ['tenure', 'TotalCharges']
 categorical_features = ['Contract', 'InternetService', 'PaperlessBilling', 'MultipleLines', 'StreamingMovies']
 
@@ -55,9 +54,8 @@ preprocessor = ColumnTransformer(transformers=[
 
 smote = SMOTE(random_state=42)
 
-
-# --- Hyperparameter Tuning & Validation ---
-print("Hyperparameter Tuning Process...")
+# --- Hyperparameter Tuning (Cross-Validation) ---
+print("\nInitiating Hyperparameter Tuning Process...")
 
 pipelines = {
     'Random Forest': (
@@ -99,7 +97,7 @@ for name, (pipe, params) in pipelines.items():
     
     search = RandomizedSearchCV(
         pipe, params, n_iter=5, cv=cv_strategy, 
-        scoring='accuracy', n_jobs=-1, random_state=42
+        scoring='f1', n_jobs=-1, random_state=42
     )
     search.fit(X_train, y_train)
     
@@ -109,10 +107,9 @@ for name, (pipe, params) in pipelines.items():
     
     best_pipelines[name] = search.best_estimator_
     print(f"    Completed in {elapsed_time:.2f} seconds.")
-    print(f"    Optimal Parameters: {search.best_params_}")
+    print(f"    Optimal Parameters Found: {search.best_params_}")
 
-
-# --- Gap Analysis & Learning Curves Rendering ---
+# --- Gap Analysis & Learning Curves Validation Rendering ---
 print("\nGenerating Gap Analysis & Learning Curves...")
 fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 fig.suptitle('Validation Diagnostics: Tuned Learning Curves', fontsize=16, fontweight='bold')
@@ -120,7 +117,7 @@ fig.suptitle('Validation Diagnostics: Tuned Learning Curves', fontsize=16, fontw
 for i, (name, pipe) in enumerate(best_pipelines.items()):
     train_sizes, train_scores, val_scores = learning_curve(
         pipe, X_train, y_train, cv=cv_strategy, 
-        train_sizes=np.linspace(0.1, 1.0, 5), scoring='accuracy', n_jobs=-1
+        train_sizes=np.linspace(0.1, 1.0, 5), scoring='f1', n_jobs=-1
     )
     
     train_mean = np.mean(train_scores, axis=1)
@@ -129,69 +126,51 @@ for i, (name, pipe) in enumerate(best_pipelines.items()):
     
     status = "EXCELLENT" if gap < 0.03 else "GOOD FIT" if gap < 0.06 else "OVERFITTING"
     print(f"\nDiagnostic Report: {name.upper()}")
-    print(f" -> Final Training Accuracy   : {train_mean[-1]:.4f}")
-    print(f" -> Final Validation Accuracy : {val_mean[-1]:.4f}")
+    print(f" -> Final Training F1-Score   : {train_mean[-1]:.4f}")
+    print(f" -> Final Validation F1-Score : {val_mean[-1]:.4f}")
     print(f" -> Performance Gap           : {gap:.4f} ({status})")
     
     axes[i].plot(train_sizes, train_mean, 'o-', color="r", label="Training Score")
     axes[i].plot(train_sizes, val_mean, 'o-', color="g", label="Validation Score")
-    axes[i].set_title(f"{name} ({status} | Gap: {gap:.4f})")
+    axes[i].set_title(f"{name} ({status})")
     axes[i].set_xlabel("Training Set Size")
-    axes[i].set_ylabel("Accuracy Metric")
+    axes[i].set_ylabel("F1 Score")
     axes[i].legend(loc='lower right')
 
 plt.tight_layout()
 plt.show()
 
 
-# EXPLICIT FINAL TRAINING AND EVALUATION
+# --- Explicit Final Training ---
 
-print(" EXPLICIT FINAL TRAINING AND EVALUATION REPORT ")
+print(" EXPLICIT FINAL TRAINING AND METRICS REPORT ")
 
-# --- Training Data Preprocessing ---
-print("Fitting and transforming 80% training data...")
 X_train_prep = preprocessor.fit_transform(X_train) 
-
-# --- SMOTE (Training Data Only) ---
-print("[Applying SMOTE to preprocessed training data...")
-X_train_smote, y_train_smote = smote.fit_resample(X_train_prep, y_train)
-
-# --- Testing Data Preprocessing ---
-print("Transforming 20% unseen testing data...")
 X_test_prep = preprocessor.transform(X_test)
+X_train_smote, y_train_smote = smote.fit_resample(X_train_prep, y_train)
 
 final_training_times = {}
 
 for name, pipeline in best_pipelines.items():
-    # Extract the tuned classifier and clone it to ensure a fresh, untrained model
     tuned_clf = pipeline.named_steps['clf']
     final_model = clone(tuned_clf) 
     
-    # --- Final Model Training ---
-    print(f"Training Final {name} Model on 100% SMOTE data...")
     start_time_train = time.time()
-    
     final_model.fit(X_train_smote, y_train_smote)
-    
     end_time_train = time.time()
     final_training_times[name] = end_time_train - start_time_train
     
-    # --- Final Testing ---
-    print(f"Testing Final {name} Model on Unseen Data...")
     start_time_pred = time.time()
-    
     y_pred = final_model.predict(X_test_prep)
-    
     end_time_pred = time.time()
     prediction_time = end_time_pred - start_time_pred
     
-    acc_test = accuracy_score(y_test, y_pred)
+    f1_test = f1_score(y_test, y_pred)
     
-    # --- Evaluation Report ---
-    print(f"\n PERFORMANCE METRICS: {name.upper()} FINAL MODEL ")
+    print(f"\n[ PERFORMANCE METRICS: {name.upper()} TRAIN MODEL ]")
     print(f"Tuning Duration         : {tuning_times[name]:.4f} seconds")
     print(f"Final Training Duration : {final_training_times[name]:.4f} seconds")
     print(f"Prediction Duration     : {prediction_time:.4f} seconds")
-    print(f"Test Set Accuracy       : {acc_test * 100:.2f}%")
+    print(f"Test Set F1-Score       : {f1_test:.4f}")
     print("Classification Report:")
     print(classification_report(y_test, y_pred, target_names=['No Churn (0)', 'Churn (1)']))

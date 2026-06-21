@@ -69,7 +69,7 @@ def print_comparison(model_name, y_true, y_pred):
     
     ref = paper_metrics[model_name]
 
-    print(f" METRIC COMPARISON: {model_name.upper()}")
+    print(f"METRIC COMPARISON: {model_name.upper()}")
 
     # Comparasion Accuraxxy
     diff_acc = acc - ref['Accuracy']
