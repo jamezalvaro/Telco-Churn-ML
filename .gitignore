@@ -1,4 +1,18 @@
+# Abaikan folder cache Python
 __pycache__/
 *.pyc
+
+# Abaikan folder Jupyter
 .ipynb_checkpoints/
 .DS_Store
+
+# Abaikan file hasil export yang bisa dibuat ulang (kecuali dataset utama)
+*.csv
+!WA_Fn-UseC_-Telco-Customer-Churn.csv
+
+# Abaikan folder discord enable jika ada
+*.json
+
+# Abaikan folder virtual environment jika ada
+venv/
+.env
